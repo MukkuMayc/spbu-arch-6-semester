@@ -5,22 +5,26 @@ int main(int argc, char** argv) {
     // Initialize the MPI environment
     MPI_Init(NULL, NULL);
 
-    // Get the number of processes
-    int world_size;
+    // Get the rank and size in the original communicator
+    int world_rank, world_size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-    // Get the rank of the process
-    int world_rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    int color = world_rank / 3; // Determine color based on row
 
-    // Get the name of the processor
-    char processor_name[MPI_MAX_PROCESSOR_NAME];
-    int name_len;
-    MPI_Get_processor_name(processor_name, &name_len);
+    // Split the communicator based on the color and use the
+    // original rank for ordering
+    MPI_Comm row_comm;
+    MPI_Comm_split(MPI_COMM_WORLD, color, world_rank, &row_comm);
 
-    // Print off a hello world message
-    printf("Hello world from processor %s, rank %d out of %d processors\n",
-           processor_name, world_rank, world_size);
+    int row_rank, row_size;
+    MPI_Comm_rank(row_comm, &row_rank);
+    MPI_Comm_size(row_comm, &row_size);
+
+    printf("WORLD RANK/SIZE: %d/%d \t ROW RANK/SIZE: %d/%d\n",
+    world_rank, world_size, row_rank, row_size);
+
+    MPI_Comm_free(&row_comm);
 
     // Finalize the MPI environment.
     MPI_Finalize();
